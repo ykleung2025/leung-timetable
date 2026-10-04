@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>梁恩奇老師 · 下一堂</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>梁恩奇老師</h1>
+    <p>只顯示你嘅時間表，同提醒下一堂。</p>
+    <div class="tools">
+      <button id="notify" type="button">上課前提醒：關</button>
+      <button id="refresh" type="button">更新時間表</button>
+    </div>
+  </header>
+  <section id="hero" class="card hero"></section>
+  <section id="today" class="card"></section>
+  <section id="duty" class="card"></section>
+  <section class="card">
+    <p class="kicker">六日循環</p>
+    <div id="grid"></div>
+  </section>
+  <p class="note" id="status"></p>
+  <p class="note">資料來自<a href="https://wongsir-lwcps.github.io/lwcps_timetable/">學校時間表</a>。提醒要開住呢一頁，瀏覽器先會通知。課堂開始前 5 分鐘響一次。</p>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
