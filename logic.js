@@ -117,7 +117,9 @@ export function lessonsOn(data, dateKey, reschedules) {
     });
   }
   const wd = weekdayKey(dateKey);
-  const p9 = (teacher.period9 || {})[wd];
+  const p9 = Object.assign({}, (teacher.period9 || {})[wd] || {});
+  if (wd === "Mon") p9.location = p9.location || "6C";
+  if (wd === "Tue") p9.location = p9.location || "1D";
   if (p9 && p9.subject) {
     const { start, end } = span(P9.time);
     items.push({
@@ -207,7 +209,10 @@ export function cycleGrid(teacher) {
     }
     return { label: period.name, time: period.time, cells };
   });
-  return { days, rows, period9: teacher.period9 || {} };
+  const period9 = Object.assign({}, teacher.period9 || {});
+  if (period9.Mon) period9.Mon = Object.assign({ place: "6C" }, period9.Mon);
+  if (period9.Tue) period9.Tue = Object.assign({ place: "1D" }, period9.Tue);
+  return { days, rows, period9 };
 }
 
 export function specialText(info) {

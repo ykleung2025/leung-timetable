@@ -189,7 +189,13 @@ function renderGrid() {
     }).join("");
     return "<tr><th>" + esc(row.label) + "<br><span class=\"note\">" + esc(row.time) + "</span></th>" + cells + "</tr>";
   }).join("");
-  const p9 = "<tr><th>第9節<br><span class=\"note\">14:35-15:20</span></th><td colspan=\"6\">一 " + esc((grid.period9.Mon || {}).subject || "") + " · 二 " + esc((grid.period9.Tue || {}).subject || "") + " · 三 " + esc((grid.period9.Wed || {}).subject || "") + " · 四 " + esc((grid.period9.Thu || {}).subject || "") + " · 五 " + esc((grid.period9.Fri || {}).subject || "") + "</td></tr>";
+  const p9names = {Mon:"一",Tue:"二",Wed:"三",Thu:"四",Fri:"五"};
+  const p9cells = ["Mon","Tue","Wed","Thu","Fri"].map((wd) => {
+    const e = grid.period9[wd] || {};
+    const place = e.place ? " " + esc(e.place) : "";
+    return "<td>" + esc(e.subject || "") + place + "</td>";
+  }).join("") + "<td></td>";
+  const p9 = "<tr><th>第9節<br><span class=\"note\">14:35-15:20</span></th>" + p9cells + "</tr>";
   document.querySelector("#grid").innerHTML = "<table>" + head + body + p9 + "</table>" + (today.type === "schoolday" ? '<p class="note">今日係 ' + esc(today.day.replace("Day", "Day ")) + "。單週雙週跟循環週，雙數週先有「雙週」堂。</p>" : "");
 }
 
