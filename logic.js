@@ -193,9 +193,11 @@ export function describeNow(data, dateKey, minutes, reschedules) {
   const teaching = today.items.filter((x) => x.teach);
   let current = null;
   let next = null;
-  for (const item of teaching) {
+  for (const item of today.items) {
     if (minutes >= item.start && minutes < item.end) current = item;
-    else if (minutes < item.start && !next) next = item;
+  }
+  for (const item of teaching) {
+    if (minutes < item.start && !next) next = item;
   }
   let upcomingKey = null;
   let upcoming = null;
