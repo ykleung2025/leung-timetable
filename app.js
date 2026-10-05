@@ -144,7 +144,7 @@ function render() {
   const rows = view.today.items.length
     ? view.today.items.map((item) => {
         const cur = view.current && view.current.id === item.id;
-        return '<div class="row' + (cur ? " current" : "") + '"><div class="t">' + esc(item.label) + "<br>" + esc(item.time) + "</div><div><strong>" + esc(lessonLine(item)) + "</strong>" + (item.original ? '<div class="place">原定 ' + esc(item.original) + "</div>" : "") + "</div></div>";
+        return '<div class="row' + (cur ? " current" : "") + '"><div class="t">' + esc(item.label) + "<br>" + esc(item.time) + "</div><div><strong>" + esc(item.teach ? lessonLine(item) : "空堂") + "</strong>" + (item.original ? '<div class="place">原定 ' + esc(item.original) + "</div>" : "") + "</div></div>";
       }).join("")
     : '<p class="note">' + esc(view.today.info.type === "special" ? specialText(view.today.info) : "今日冇你嘅堂。") + "</p>";
   todayBox.innerHTML = '<p class="kicker">今日</p><h3 style="margin:0 0 10px">' + esc(head) + "</h3><div class=\"list\">" + rows + "</div>";

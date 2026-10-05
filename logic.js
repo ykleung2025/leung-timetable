@@ -101,7 +101,22 @@ export function lessonsOn(data, dateKey, reschedules) {
       });
       continue;
     }
-    if (!original) continue;
+    if (!original) {
+      items.push({
+        id: dateKey + "-" + row.label,
+        label: row.label,
+        time: row.time,
+        start,
+        end,
+        subject: "空堂",
+        place: "",
+        original: "",
+        swapped: false,
+        teach: false,
+        kind: "free",
+      });
+      continue;
+    }
     items.push({
       id: dateKey + "-" + row.label,
       label: row.label,
