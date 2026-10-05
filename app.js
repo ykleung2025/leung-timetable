@@ -1,4 +1,4 @@
-import { describeNow, dutiesOn, cycleGrid, weekdayZh, specialText, addDays, dayInfo } from "./logic.js";
+import { describeNow, dutiesOn, cycleGrid, weekdayZh, specialText, addDays, dayInfo } from "./logic.js?v=5";
 
 const SOURCE = "https://raw.githubusercontent.com/wongsir-lwcps/lwcps_timetable/main/index.html";
 const FB_CONFIG = {
