@@ -1,4 +1,4 @@
-import { describeNow, dutiesOn, cycleGrid, weekdayZh, specialText, addDays, dayInfo } from "./logic.js?v=5";
+import { describeNow, dutiesOn, cycleGrid, weekdayZh, specialText, addDays, dayInfo } from "./logic.js?v=6";
 
 const SOURCE = "https://raw.githubusercontent.com/wongsir-lwcps/lwcps_timetable/main/index.html";
 const FB_CONFIG = {
@@ -90,24 +90,45 @@ function lessonLine(item) {
   return item.subject + place;
 }
 
+function heroMarkup(when, title, meta, sub) {
+  return '<p class="when">' + esc(when) + "</p>" +
+    "<h2>" + esc(title) + "</h2>" +
+    (meta ? '<p class="meta">' + esc(meta) + "</p>" : "") +
+    (sub ? '<p class="sub">' + esc(sub) + "</p>" : "");
+}
+
 function render() {
   const now = hkNow();
   const view = describeNow(state.data, now.key, now.minutes, state.reschedules);
   const hero = document.querySelector("#hero");
+  const heroNext = document.querySelector("#hero-next");
   const todayBox = document.querySelector("#today");
   const dutyBox = document.querySelector("#duty");
   const status = document.querySelector("#status");
   hero.className = "card hero";
+  heroNext.className = "card hero";
+  heroNext.innerHTML = "";
   let title = "";
   let meta = "";
   let sub = "";
   let when = "";
+  let nextCard = null;
   if (view.current) {
     hero.classList.add("now");
     when = "而家上緊";
     title = view.current.label + " " + lessonLine(view.current);
     meta = view.current.time;
-    sub = view.next ? "下一堂 " + view.next.label + " " + lessonLine(view.next) + "（" + minsLeft(now.minutes, view.next) + "）" : "今日之後冇堂";
+    if (view.next) {
+      const left = minsLeft(now.minutes, view.next);
+      nextCard = {
+        when: "下一節",
+        title: view.next.label + " " + lessonLine(view.next),
+        meta: view.next.time + (left ? " · " + left : ""),
+        sub: view.next.swapped && view.next.original ? "原定 " + view.next.original : "",
+      };
+    } else {
+      sub = "今日之後冇堂";
+    }
     if (view.current.swapped && view.current.original) sub = "原定 " + view.current.original + (sub ? "。" + sub : "");
   } else if (view.next) {
     hero.classList.add("next");
@@ -133,11 +154,11 @@ function render() {
     sub = view.upcoming ? "下一個上課日 " + fmtDate(view.upcomingKey) : "";
     hero.className = "card hero wait";
   }
-  hero.innerHTML =
-    '<p class="when">' + esc(when) + "</p>" +
-    "<h2>" + esc(title) + "</h2>" +
-    (meta ? '<p class="meta">' + esc(meta) + "</p>" : "") +
-    (sub ? '<p class="sub">' + esc(sub) + "</p>" : "");
+  hero.innerHTML = heroMarkup(when, title, meta, sub);
+  if (nextCard) {
+    heroNext.classList.add("next");
+    heroNext.innerHTML = heroMarkup(nextCard.when, nextCard.title, nextCard.meta, nextCard.sub);
+  }
 
   const cycle = view.today.info.type === "schoolday" ? view.today.info.day.replace("Day", "Day ") : "";
   const head = cycle ? fmtDate(now.key) + " · " + cycle : fmtDate(now.key);
