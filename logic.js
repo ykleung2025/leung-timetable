@@ -154,21 +154,39 @@ export function lessonsOn(data, dateKey, reschedules) {
   return { info, items, parity: cycleParity(data, dateKey) };
 }
 
+// School duty windows (teacher rows on the school timetable):
+// morningA 07:30-07:45, morningB 07:45-08:00,
+// recess1 10:10-10:25, recess2 11:35-11:50,
+// lunch 13:00-13:30, recess3 13:30-14:00.
+const DUTY_WINDOWS = {
+  morningA: { label: "課前值日 07:30-07:45", time: "07:30-07:45" },
+  morningB: { label: "課前值日 07:45-08:00", time: "07:45-08:00" },
+  recess1: { label: "小息一值日", time: "10:10-10:25" },
+  recess2: { label: "小息二值日", time: "11:35-11:50" },
+  lunch: { label: "午膳值日", time: "13:00-13:30" },
+  recess3: { label: "小息三值日", time: "13:30-14:00" },
+};
+
 export function dutiesOn(data, dateKey) {
   const info = dayInfo(data, dateKey);
   if (info.type !== "schoolday") return [];
-  const labels = {
-    morningA: "課前值日 07:30-07:45",
-    morningB: "課前值日 07:45-08:00",
-    recess1: "小息一值日",
-    recess2: "小息二值日",
-    recess3: "小息三值日",
-    lunch: "午膳值日",
-  };
-  return ((data.duty || {})[info.day] || []).map((d) => ({
-    label: labels[d.slot] || d.slot,
-    place: d.location || "",
-  }));
+  return ((data.duty || {})[info.day] || []).map((d) => {
+    const win = DUTY_WINDOWS[d.slot];
+    const range = win ? span(win.time) : { start: null, end: null };
+    return {
+      slot: d.slot,
+      label: win ? win.label : d.slot,
+      place: d.location || "",
+      time: win ? win.time : "",
+      start: range.start,
+      end: range.end,
+    };
+  });
+}
+
+export function dutyActive(duty, minutes) {
+  if (!duty || duty.start == null || duty.end == null) return false;
+  return minutes >= duty.start && minutes < duty.end;
 }
 
 export function addDays(dateKey, n) {

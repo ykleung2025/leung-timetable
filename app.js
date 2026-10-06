@@ -1,4 +1,4 @@
-import { describeNow, dutiesOn, cycleGrid, weekdayZh, specialText, addDays, dayInfo } from "./logic.js?v=6";
+import { describeNow, dutiesOn, dutyActive, cycleGrid, weekdayZh, specialText, addDays, dayInfo } from "./logic.js?v=7";
 
 const SOURCE = "https://raw.githubusercontent.com/wongsir-lwcps/lwcps_timetable/main/index.html";
 const FB_CONFIG = {
@@ -172,7 +172,10 @@ function render() {
 
   const duties = dutiesOn(state.data, now.key);
   dutyBox.innerHTML = duties.length
-    ? '<p class="kicker">今日值日</p><div class="chips">' + duties.map((d) => '<span class="chip">' + esc(d.label + (d.place ? " · " + d.place : "")) + "</span>").join("") + "</div>"
+    ? '<p class="kicker">今日值日</p><div class="chips">' + duties.map((d) => {
+        const on = dutyActive(d, now.minutes);
+        return '<span class="chip' + (on ? " current" : "") + '">' + esc(d.label + (d.place ? " · " + d.place : "")) + "</span>";
+      }).join("") + "</div>"
     : "";
 
   const bits = [];

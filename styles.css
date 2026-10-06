@@ -71,6 +71,7 @@ button,select{font-family:inherit}
 .row.current{background:var(--green-soft);margin:0 -10px;padding:10px;border-radius:12px;border-top:0}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{background:#f4f6fb;border-radius:999px;padding:6px 10px;font-size:13px}
+.chip.current{background:var(--green-soft)}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
 th{color:var(--muted);font-weight:650}
