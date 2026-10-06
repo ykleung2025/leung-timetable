@@ -73,8 +73,21 @@ button,select{font-family:inherit}
 .chip{background:#f4f6fb;border-radius:999px;padding:6px 10px;font-size:13px}
 .chip.current{background:var(--green-soft)}
 table{width:100%;border-collapse:collapse;font-size:13px}
+#grid table{border-collapse:separate;border-spacing:0}
 th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
 th{color:var(--muted);font-weight:650}
+#grid th.cycle-today,
+#grid td.cycle-today{
+  background:var(--green-soft);
+  border-left:2px solid #b7e4cc;
+  border-right:2px solid #b7e4cc;
+}
+#grid tr:first-child th.cycle-today{
+  color:var(--green);
+  border-top:2px solid #b7e4cc;
+}
+#grid td.cycle-today-end,
+#grid th.cycle-today-end{border-bottom:2px solid #b7e4cc}
 .tag{display:inline-block;font-size:11px;border-radius:999px;padding:1px 6px;background:#f4e6c8;color:var(--amber);margin-left:4px}
 .note{color:var(--muted);font-size:12px;margin:8px 0 0}
 a{color:var(--blue)}

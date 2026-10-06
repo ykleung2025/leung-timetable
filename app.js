@@ -1,4 +1,4 @@
-import { describeNow, dutiesOn, dutyActive, cycleGrid, weekdayZh, specialText, addDays, dayInfo } from "./logic.js?v=7";
+import { describeNow, dutiesOn, dutyActive, cycleGrid, weekdayZh, specialText, addDays, dayInfo } from "./logic.js?v=8";
 
 const SOURCE = "https://raw.githubusercontent.com/wongsir-lwcps/lwcps_timetable/main/index.html";
 const FB_CONFIG = {
@@ -200,21 +200,22 @@ function maybeNotify(now, view) {
 function renderGrid() {
   const grid = cycleGrid(state.data.teacher);
   const today = dayInfo(state.data, hkNow().key);
-  const head = "<tr><th></th>" + grid.days.map((d) => "<th>" + d.replace("Day", "D") + "</th>").join("") + "</tr>";
-  const body = grid.rows.map((row) => {
+  const todayDay = today.type === "schoolday" ? today.day : "";
+  const mark = (day, end) => day === todayDay ? ' class="cycle-today' + (end ? " cycle-today-end" : "") + '"' : "";
+  const last = grid.rows.length - 1;
+  const head = "<tr><th></th>" + grid.days.map((d) => "<th" + mark(d, last < 0) + ">" + d.replace("Day", "D") + "</th>").join("") + "</tr>";
+  const body = grid.rows.map((row, i) => {
     const cells = grid.days.map((d) => {
       const list = row.cells[d];
-      if (!list.length) return "<td></td>";
-      const html = list.map((e) => {
+      const html = list.length ? list.map((e) => {
         const tag = e.parity === "even" ? '<span class="tag">雙週</span>' : e.parity === "odd" ? '<span class="tag">單週</span>' : "";
         return esc(e.subject) + (e.place ? " " + esc(e.place) : "") + tag;
-      }).join("<br>");
-      return "<td>" + html + "</td>";
+      }).join("<br>") : "";
+      return "<td" + mark(d, i === last) + ">" + html + "</td>";
     }).join("");
     return "<tr><th>" + esc(row.label) + "<br><span class=\"note\">" + esc(row.time) + "</span></th>" + cells + "</tr>";
   }).join("");
-  const p9names = {Mon:"一",Tue:"二",Wed:"三",Thu:"四",Fri:"五"};
-  const p9cells = ["Mon","Tue","Wed","Thu","Fri"].map((wd) => {
+  const p9cells = ["Mon", "Tue", "Wed", "Thu", "Fri"].map((wd) => {
     const e = grid.period9[wd] || {};
     const place = e.place ? " " + esc(e.place) : "";
     return "<td>" + esc(e.subject || "") + place + "</td>";
