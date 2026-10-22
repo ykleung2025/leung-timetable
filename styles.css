@@ -69,6 +69,10 @@ button,select{font-family:inherit}
 .row strong{font-size:16px}
 .row .place{color:var(--muted);font-size:14px}
 .row.current{background:var(--green-soft);margin:0 -10px;padding:10px;border-radius:12px;border-top:0}
+.row.break{background:#f7f8fc}
+.row.break strong{font-weight:600;font-style:italic;color:var(--muted)}
+.row.break.current{background:var(--green-soft)}
+.row.break.current strong{color:var(--ink);font-style:normal}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{background:#f4f6fb;border-radius:999px;padding:6px 10px;font-size:13px}
 .chip.current{background:var(--green-soft)}
