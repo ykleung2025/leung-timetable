@@ -161,10 +161,10 @@ export function lessonsOn(data, dateKey, reschedules) {
 const DUTY_WINDOWS = {
   morningA: { label: "課前值日 07:30-07:45", time: "07:30-07:45" },
   morningB: { label: "課前值日 07:45-08:00", time: "07:45-08:00" },
-  recess1: { label: "小息一值日", time: "10:10-10:25" },
-  recess2: { label: "小息二值日", time: "11:35-11:50" },
-  lunch: { label: "午膳值日", time: "13:00-13:30" },
-  recess3: { label: "小息三值日", time: "13:30-14:00" },
+  recess1: { label: "小息一值日 10:10-10:25", time: "10:10-10:25" },
+  recess2: { label: "小息二值日 11:35-11:50", time: "11:35-11:50" },
+  lunch: { label: "午膳值日 13:00-13:30", time: "13:00-13:30" },
+  recess3: { label: "小息三值日 13:30-14:00", time: "13:30-14:00" },
 };
 
 export function dutiesOn(data, dateKey) {
@@ -187,6 +187,45 @@ export function dutiesOn(data, dateKey) {
 export function dutyActive(duty, minutes) {
   if (!duty || duty.start == null || duty.end == null) return false;
   return minutes >= duty.start && minutes < duty.end;
+}
+
+// Breaks between lessons (same windows as DUTY_WINDOWS recess/lunch).
+const BREAKS = [
+  { slot: "recess1", label: "小息一", time: "10:10-10:25" },
+  { slot: "recess2", label: "小息二", time: "11:35-11:50" },
+  { slot: "lunch", label: "午膳", time: "13:00-13:30" },
+  { slot: "recess3", label: "小息三", time: "13:30-14:00" },
+];
+
+/** Lessons plus recess/lunch rows, sorted by start. Hero should keep using lessonsOn/describeNow. */
+export function dayTimeline(data, dateKey, reschedules) {
+  const today = lessonsOn(data, dateKey, reschedules);
+  if (today.info.type !== "schoolday") return today;
+  const dutyBySlot = {};
+  for (const d of dutiesOn(data, dateKey)) dutyBySlot[d.slot] = d;
+  const items = today.items.slice();
+  for (const b of BREAKS) {
+    const { start, end } = span(b.time);
+    const duty = dutyBySlot[b.slot];
+    const dutyPlace = duty && duty.place ? duty.place : "";
+    items.push({
+      id: dateKey + "-" + b.slot,
+      label: b.label,
+      time: b.time,
+      start,
+      end,
+      subject: dutyPlace ? "值日 · " + dutyPlace : (b.slot === "lunch" ? "午膳" : "小息"),
+      place: dutyPlace,
+      dutyPlace,
+      original: "",
+      swapped: false,
+      teach: false,
+      kind: "break",
+      slot: b.slot,
+    });
+  }
+  items.sort((a, b) => a.start - b.start || (a.kind === "break" ? 1 : 0) - (b.kind === "break" ? 1 : 0));
+  return { info: today.info, items, parity: today.parity };
 }
 
 export function addDays(dateKey, n) {

@@ -1,4 +1,4 @@
-import { describeNow, dutiesOn, dutyActive, cycleGrid, weekdayZh, specialText, addDays, dayInfo } from "./logic.js?v=8";
+import { describeNow, dayTimeline, dutiesOn, dutyActive, cycleGrid, weekdayZh, specialText, addDays, dayInfo } from "./logic.js?v=9";
 
 const SOURCE = "https://raw.githubusercontent.com/wongsir-lwcps/lwcps_timetable/main/index.html";
 const FB_CONFIG = {
@@ -160,14 +160,20 @@ function render() {
     heroNext.innerHTML = heroMarkup(nextCard.when, nextCard.title, nextCard.meta, nextCard.sub);
   }
 
-  const cycle = view.today.info.type === "schoolday" ? view.today.info.day.replace("Day", "Day ") : "";
+  const timeline = dayTimeline(state.data, now.key, state.reschedules);
+  const cycle = timeline.info.type === "schoolday" ? timeline.info.day.replace("Day", "Day ") : "";
   const head = cycle ? fmtDate(now.key) + " · " + cycle : fmtDate(now.key);
-  const rows = view.today.items.length
-    ? view.today.items.map((item) => {
-        const cur = view.current && view.current.id === item.id;
-        return '<div class="row' + (cur ? " current" : "") + '"><div class="t">' + esc(item.label) + "<br>" + esc(item.time) + "</div><div><strong>" + esc(item.teach ? lessonLine(item) : "空堂") + "</strong>" + (item.original ? '<div class="place">原定 ' + esc(item.original) + "</div>" : "") + "</div></div>";
+  const rows = timeline.items.length
+    ? timeline.items.map((item) => {
+        const cur = now.minutes >= item.start && now.minutes < item.end;
+        const isBreak = item.kind === "break";
+        const main = isBreak
+          ? item.subject
+          : (item.teach ? lessonLine(item) : "空堂");
+        const cls = "row" + (isBreak ? " break" : "") + (cur ? " current" : "");
+        return '<div class="' + cls + '"><div class="t">' + esc(item.label) + "<br>" + esc(item.time) + "</div><div><strong>" + esc(main) + "</strong>" + (item.original ? '<div class="place">原定 ' + esc(item.original) + "</div>" : "") + "</div></div>";
       }).join("")
-    : '<p class="note">' + esc(view.today.info.type === "special" ? specialText(view.today.info) : "今日冇你嘅堂。") + "</p>";
+    : '<p class="note">' + esc(timeline.info.type === "special" ? specialText(timeline.info) : "今日冇你嘅堂。") + "</p>";
   todayBox.innerHTML = '<p class="kicker">今日</p><h3 style="margin:0 0 10px">' + esc(head) + "</h3><div class=\"list\">" + rows + "</div>";
 
   const duties = dutiesOn(state.data, now.key);
@@ -271,17 +277,31 @@ function bind() {
     btn.classList.toggle("on", state.notify);
     btn.textContent = state.notify ? "上課前提醒：開" : "上課前提醒：關";
   });
-  document.querySelector("#refresh").addEventListener("click", async () => {
-    try { await loadLive(); } catch (e) { /* keep current */ }
-    render();
-    renderGrid();
-  });
+  document.querySelector("#refresh").addEventListener("click", () => refreshLive());
+}
+
+let lastDateKey = "";
+
+function tick() {
+  const key = hkNow().key;
+  const rolled = lastDateKey && key !== lastDateKey;
+  lastDateKey = key;
+  render();
+  renderGrid();
+  if (rolled) refreshLive();
+}
+
+async function refreshLive() {
+  try { await loadLive(); } catch (e) { /* keep current */ }
+  lastDateKey = hkNow().key;
+  render();
+  renderGrid();
 }
 
 await loadFallback();
-render();
-renderGrid();
+tick();
 bind();
-loadLive().then(() => { render(); renderGrid(); }).catch(() => render());
-loadSwaps().catch(() => render());
-setInterval(render, 20000);
+loadLive().then(() => tick()).catch(() => tick());
+loadSwaps().catch(() => tick());
+setInterval(tick, 20000);
+setInterval(refreshLive, 8 * 60 * 1000);
