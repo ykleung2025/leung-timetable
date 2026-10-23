@@ -269,9 +269,9 @@ export function describeNow(data, dateKey, minutes, reschedules) {
   return { today, current, next, upcomingKey, upcoming };
 }
 
-export function cycleGrid(teacher) {
+export function cycleGrid(teacher, duty) {
   const days = ["Day1", "Day2", "Day3", "Day4", "Day5", "Day6"];
-  const rows = teacher.periods.map((period) => {
+  const lessonRows = teacher.periods.map((period) => {
     const cells = {};
     for (const day of days) {
       const list = period.byDay[day] || [];
@@ -281,8 +281,31 @@ export function cycleGrid(teacher) {
         parity: e.parity || "",
       }));
     }
-    return { label: period.name, time: period.time, cells };
+    return { kind: "lesson", label: period.name, time: period.time, cells };
   });
+  function breakRow(b) {
+    const cells = {};
+    for (const day of days) {
+      const hit = ((duty || {})[day] || []).find((d) => d.slot === b.slot);
+      const place = hit ? placeOf(hit.location) : "";
+      const subject = place
+        ? "值日 · " + place
+        : (b.slot === "lunch" ? "午膳" : "小息");
+      cells[day] = [{ subject, place, parity: "", kind: "break" }];
+    }
+    return { kind: "break", label: b.label, time: b.time, slot: b.slot, cells };
+  }
+  // After 第3／5／7節插入小息一、小息二、午膳＋小息三（同今日時間軸）。
+  const rows = [];
+  for (let i = 0; i < lessonRows.length; i++) {
+    rows.push(lessonRows[i]);
+    if (i === 2) rows.push(breakRow(BREAKS[0]));
+    if (i === 4) rows.push(breakRow(BREAKS[1]));
+    if (i === 6) {
+      rows.push(breakRow(BREAKS[2]));
+      rows.push(breakRow(BREAKS[3]));
+    }
+  }
   const period9 = Object.assign({}, teacher.period9 || {});
   if (period9.Mon) period9.Mon = Object.assign({ place: "6C" }, period9.Mon);
   if (period9.Tue) period9.Tue = Object.assign({ place: "1D" }, period9.Tue);

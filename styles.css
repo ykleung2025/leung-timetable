@@ -98,3 +98,12 @@ a{color:var(--blue)}
 .hidden{display:none}
 
 .card:empty{display:none}
+
+#grid tr.break th,
+#grid tr.break td{
+  background:#f7f8fc;
+  color:var(--muted);
+  font-style:italic;
+  font-weight:600;
+}
+#grid tr.break th .note{font-style:normal}
