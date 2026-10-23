@@ -1,4 +1,4 @@
-import { describeNow, dayTimeline, dutiesOn, dutyActive, cycleGrid, weekdayZh, specialText, addDays, dayInfo } from "./logic.js?v=9";
+import { describeNow, dayTimeline, dutiesOn, dutyActive, cycleGrid, weekdayZh, specialText, addDays, dayInfo } from "./logic.js?v=10";
 
 const SOURCE = "https://raw.githubusercontent.com/wongsir-lwcps/lwcps_timetable/main/index.html";
 const FB_CONFIG = {
@@ -204,22 +204,24 @@ function maybeNotify(now, view) {
 }
 
 function renderGrid() {
-  const grid = cycleGrid(state.data.teacher);
+  const grid = cycleGrid(state.data.teacher, state.data.duty);
   const today = dayInfo(state.data, hkNow().key);
   const todayDay = today.type === "schoolday" ? today.day : "";
   const mark = (day, end) => day === todayDay ? ' class="cycle-today' + (end ? " cycle-today-end" : "") + '"' : "";
   const last = grid.rows.length - 1;
   const head = "<tr><th></th>" + grid.days.map((d) => "<th" + mark(d, last < 0) + ">" + d.replace("Day", "D") + "</th>").join("") + "</tr>";
   const body = grid.rows.map((row, i) => {
+    const isBreak = row.kind === "break";
     const cells = grid.days.map((d) => {
       const list = row.cells[d];
       const html = list.length ? list.map((e) => {
+        if (isBreak || e.kind === "break") return esc(e.subject);
         const tag = e.parity === "even" ? '<span class="tag">雙週</span>' : e.parity === "odd" ? '<span class="tag">單週</span>' : "";
         return esc(e.subject) + (e.place ? " " + esc(e.place) : "") + tag;
       }).join("<br>") : "";
       return "<td" + mark(d, i === last) + ">" + html + "</td>";
     }).join("");
-    return "<tr><th>" + esc(row.label) + "<br><span class=\"note\">" + esc(row.time) + "</span></th>" + cells + "</tr>";
+    return "<tr" + (isBreak ? ' class="break"' : "") + "><th>" + esc(row.label) + "<br><span class=\"note\">" + esc(row.time) + "</span></th>" + cells + "</tr>";
   }).join("");
   const p9cells = ["Mon", "Tue", "Wed", "Thu", "Fri"].map((wd) => {
     const e = grid.period9[wd] || {};
@@ -227,7 +229,7 @@ function renderGrid() {
     return "<td>" + esc(e.subject || "") + place + "</td>";
   }).join("") + "<td></td>";
   const p9 = "<tr><th>第9節<br><span class=\"note\">14:35-15:20</span></th>" + p9cells + "</tr>";
-  document.querySelector("#grid").innerHTML = "<table>" + head + body + p9 + "</table>" + (today.type === "schoolday" ? '<p class="note">今日係 ' + esc(today.day.replace("Day", "Day ")) + "。單週雙週跟循環週，雙數週先有「雙週」堂。</p>" : "");
+  document.querySelector("#grid").innerHTML = "<table>" + head + body + p9 + "</table>" + (today.type === "schoolday" ? '<p class="note">今日係 ' + esc(today.day.replace("Day", "Day ")) + "。單週雙週跟循環週，雙數週先有「雙週」堂。小息／午膳列有值日會顯示地點。</p>" : "");
 }
 
 async function loadFallback() {
