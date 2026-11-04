@@ -1,4 +1,4 @@
-import { describeNow, dayTimeline, dutiesOn, dutyActive, cycleGrid, weekdayZh, specialText, addDays, dayInfo } from "./logic.js?v=10";
+import { describeNow, dayTimeline, dutiesOn, dutyActive, cycleGrid, weekdayZh, specialText, addDays, dayInfo } from "./logic.js?v=11";
 
 const SOURCE = "https://raw.githubusercontent.com/wongsir-lwcps/lwcps_timetable/main/index.html";
 const FB_CONFIG = {
@@ -97,6 +97,26 @@ function heroMarkup(when, title, meta, sub) {
     (sub ? '<p class="sub">' + esc(sub) + "</p>" : "");
 }
 
+function timelineRows(items, minutes, highlight) {
+  return items.map((item) => {
+    const cur = highlight && minutes >= item.start && minutes < item.end;
+    const isBreak = item.kind === "break";
+    const main = isBreak ? item.subject : (item.teach ? lessonLine(item) : "空堂");
+    const cls = "row" + (isBreak ? " break" : "") + (cur ? " current" : "");
+    return '<div class="' + cls + '"><div class="t">' + esc(item.label) + "<br>" + esc(item.time) + "</div><div><strong>" + esc(main) + "</strong>" + (item.original ? '<div class="place">原定 ' + esc(item.original) + "</div>" : "") + "</div></div>";
+  }).join("");
+}
+
+function emptyDayText(info) {
+  if (info.type === "special") {
+    const text = specialText(info);
+    const cat = (info.detail && info.detail.category) || "";
+    if (cat && text && text !== cat && text.indexOf(cat) !== 0) return cat + "：" + text;
+    return text || "呢日唔係正常上課日。";
+  }
+  return "呢日唔係上課日。";
+}
+
 function render() {
   const now = hkNow();
   const view = describeNow(state.data, now.key, now.minutes, state.reschedules);
@@ -164,15 +184,7 @@ function render() {
   const cycle = timeline.info.type === "schoolday" ? timeline.info.day.replace("Day", "Day ") : "";
   const head = cycle ? fmtDate(now.key) + " · " + cycle : fmtDate(now.key);
   const rows = timeline.items.length
-    ? timeline.items.map((item) => {
-        const cur = now.minutes >= item.start && now.minutes < item.end;
-        const isBreak = item.kind === "break";
-        const main = isBreak
-          ? item.subject
-          : (item.teach ? lessonLine(item) : "空堂");
-        const cls = "row" + (isBreak ? " break" : "") + (cur ? " current" : "");
-        return '<div class="' + cls + '"><div class="t">' + esc(item.label) + "<br>" + esc(item.time) + "</div><div><strong>" + esc(main) + "</strong>" + (item.original ? '<div class="place">原定 ' + esc(item.original) + "</div>" : "") + "</div></div>";
-      }).join("")
+    ? timelineRows(timeline.items, now.minutes, true)
     : '<p class="note">' + esc(timeline.info.type === "special" ? specialText(timeline.info) : "今日冇你嘅堂。") + "</p>";
   todayBox.innerHTML = '<p class="kicker">今日</p><h3 style="margin:0 0 10px">' + esc(head) + "</h3><div class=\"list\">" + rows + "</div>";
 
@@ -201,6 +213,54 @@ function maybeNotify(now, view) {
   if (sessionStorage.getItem("notified") === key) return;
   sessionStorage.setItem("notified", key);
   new Notification("下一堂快到", { body: item.label + " " + lessonLine(item) + " " + item.time });
+}
+
+let pickTouched = false;
+
+function renderPick() {
+  const input = document.querySelector("#pick-date");
+  const body = document.querySelector("#pick-body");
+  if (!input || !body || !state.data) return;
+  const todayKey = hkNow().key;
+  const keys = Object.keys(state.data.dayMap || {}).sort();
+  if (keys.length) {
+    let min = keys[0];
+    let max = keys[keys.length - 1];
+    if (todayKey < min) min = todayKey;
+    if (todayKey > max) max = todayKey;
+    input.min = min;
+    input.max = max;
+  }
+  if (!pickTouched && input.value !== todayKey) input.value = todayKey;
+  const key = input.value;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) {
+    body.innerHTML = '<p class="note">請揀一個日期。</p>';
+    return;
+  }
+  const now = hkNow();
+  const timeline = dayTimeline(state.data, key, state.reschedules);
+  const info = timeline.info;
+  const cycle = info.type === "schoolday" ? info.day.replace("Day", "Day ") : "";
+  const head = cycle ? fmtDate(key) + " · " + cycle : fmtDate(key);
+  const highlight = key === now.key;
+  let extra = "";
+  if (info.type === "schoolday" && timeline.parity) {
+    const which = timeline.parity.parity === "even" ? "雙週" : "單週";
+    extra = '<p class="note">循環週 ' + timeline.parity.week + " · " + which + "</p>";
+  } else if (info.type !== "schoolday") {
+    extra = '<p class="note">' + esc(emptyDayText(info)) + "</p>";
+  }
+  const duties = info.type === "schoolday" ? dutiesOn(state.data, key) : [];
+  const dutyHtml = duties.length
+    ? '<p class="kicker pick-gap">值日</p><div class="chips">' + duties.map((d) => {
+        const on = highlight && dutyActive(d, now.minutes);
+        return '<span class="chip' + (on ? " current" : "") + '">' + esc(d.label + (d.place ? " · " + d.place : "")) + "</span>";
+      }).join("") + "</div>"
+    : "";
+  const rows = info.type === "schoolday" && timeline.items.length
+    ? '<div class="list pick-gap">' + timelineRows(timeline.items, now.minutes, highlight) + "</div>"
+    : (info.type === "schoolday" ? '<p class="note">呢日冇你嘅堂。</p>' : "");
+  body.innerHTML = "<h3>" + esc(head) + "</h3>" + extra + dutyHtml + rows;
 }
 
 function renderGrid() {
@@ -280,6 +340,15 @@ function bind() {
     btn.textContent = state.notify ? "上課前提醒：開" : "上課前提醒：關";
   });
   document.querySelector("#refresh").addEventListener("click", () => refreshLive());
+  const pick = document.querySelector("#pick-date");
+  pick.addEventListener("input", () => {
+    pickTouched = true;
+    renderPick();
+  });
+  pick.addEventListener("change", () => {
+    pickTouched = true;
+    renderPick();
+  });
 }
 
 let lastDateKey = "";
@@ -290,6 +359,7 @@ function tick() {
   lastDateKey = key;
   render();
   renderGrid();
+  renderPick();
   if (rolled) refreshLive();
 }
 
@@ -298,6 +368,7 @@ async function refreshLive() {
   lastDateKey = hkNow().key;
   render();
   renderGrid();
+  renderPick();
 }
 
 await loadFallback();

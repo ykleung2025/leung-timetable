@@ -20,7 +20,7 @@ body{
   color:var(--ink);
   line-height:1.45;
 }
-button,select{font-family:inherit}
+button,select,input{font-family:inherit}
 .app{max-width:760px;margin:0 auto;padding:0 16px 40px}
 .top{
   background:var(--navy);
@@ -96,6 +96,34 @@ th{color:var(--muted);font-weight:650}
 .note{color:var(--muted);font-size:12px;margin:8px 0 0}
 a{color:var(--blue)}
 .hidden{display:none}
+.date-field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin:10px 0 4px;
+  font-size:14px;
+  font-weight:650;
+  color:var(--ink);
+}
+.date-field input[type="date"]{
+  font-size:16px;
+  font-weight:500;
+  color:var(--ink);
+  background:var(--bg);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px 12px;
+  width:100%;
+  max-width:100%;
+  min-height:44px;
+}
+.date-field input[type="date"]:focus{
+  outline:2px solid var(--blue);
+  outline-offset:1px;
+  border-color:var(--blue);
+}
+#pick-body h3{margin:12px 0 0;font-size:18px}
+.pick-gap{margin-top:12px}
 
 .card:empty{display:none}
 
